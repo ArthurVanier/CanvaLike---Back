@@ -1,0 +1,64 @@
+# Fichiers générés par Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+db.sqlite3
+*.sqlite
+
+# Environnements virtuels
+.venv/
+venv/
+ENV/
+
+# Fichiers générés par Django
+*.pot
+*.log
+local_settings.py
+
+# Fichiers générés par Visual Studio Code
+.vscode/
+
+# Fichiers générés par le système d'exploitation
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Fichiers générés par des outils tiers
+*.swo
+*.swp
+*.swn
+*.idea/
+
+# Fichiers générés par des tests
+.coverage
+.htmlcov/
+.tox/
+.nox/
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+pytestdebug.log
+
+# Fichiers générés par le déploiement
+bin/
+include/
+lib/
+lib64/
+share/
+
+# fichier perso
+todo.txt
+migrations
+
+src/
