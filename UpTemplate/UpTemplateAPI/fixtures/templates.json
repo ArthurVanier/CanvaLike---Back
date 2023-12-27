@@ -1,0 +1,18 @@
+[
+    {
+        "model": "UpTemplateAPI.template",
+        "pk": 1,
+        "fields" : {
+            "name": "test",
+            "user": 1
+        }
+    },
+    {
+        "model": "UpTemplateAPI.template",
+        "pk": 2,
+        "fields" : {
+            "name": "template test 2",
+            "user": 1
+        }
+    }
+]

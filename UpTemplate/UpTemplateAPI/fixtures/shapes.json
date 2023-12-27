@@ -1,0 +1,24 @@
+[
+    {
+      "model": "UpTemplateAPI.shape",
+      "pk": 1,
+      "fields": {
+        "template": 1,
+        "content_type": 3,
+        "shape_id": 1,
+        "props": 1,
+        "shadow": 1
+      }
+    },
+    {
+        "model": "UpTemplateAPI.shape",
+        "pk": 2,
+        "fields": {
+          "template": 1,
+          "content_type": 1,
+          "shape_id": 1,
+          "props": 1,
+          "shadow": 1
+        }
+    }
+]

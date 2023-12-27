@@ -1,0 +1,10 @@
+[
+    {
+        "model": "UpTemplateAPI.templateshaperelation",
+        "pk": 1,
+        "fields" : {
+            "shape_id": 1,
+            "template_id": 1
+        }
+    }
+]

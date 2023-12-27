@@ -1,0 +1,30 @@
+[
+    {
+      "model": "auth.user",
+      "pk": 1,
+      "fields": {
+        "username": "test",
+        "first_name": "John",
+        "last_name": "Doe",
+        "email": "user1@example.com",
+        "is_active": true,
+        "is_staff": false,
+        "is_superuser": false,
+        "password": "test"
+      }
+    },
+    {
+        "model": "auth.user",
+        "pk": 2,
+        "fields": {
+          "username": "user2",
+          "first_name": "u2",
+          "last_name": "u2",
+          "email": "user2@example.com",
+          "is_active": true,
+          "is_staff": false,
+          "is_superuser": false,
+          "password": "test"
+        }
+      }
+]

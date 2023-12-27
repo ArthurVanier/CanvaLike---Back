@@ -1,8 +1,12 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
-from .models import Template, ShapeShadow, ShapeProps, Rectangle, Circle, Media, Shape, TemplateShapeRelation
+from .models import Template, Rectangle, Circle, Media, Shape, Layout, Text, MediaContent
 from django.shortcuts import get_object_or_404
+from django.contrib.contenttypes.models import ContentType
+from .utils import flatten_dict
+import re
+
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -18,25 +22,19 @@ class UserSerializer(serializers.ModelSerializer):
         return make_password(value)
 
 
-class ShapePropsSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = ShapeProps
-        fields = '__all__'
-
-
-class ShadowPropsSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = ShapeShadow
-        fields = '__all__'
-
-
 class RectangleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Rectangle
         fields = '__all__'
+    
+
+    def __init__(self, *args, **kwargs):
+        super(RectangleSerializer, self).__init__(*args, **kwargs)
+
+        if self.instance:
+            for field in self.fields.values():
+                field.required = False
 
 
 class CircleSerializer(serializers.ModelSerializer):
@@ -44,6 +42,14 @@ class CircleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Circle
         fields = '__all__'
+    
+
+    def __init__(self, *args, **kwargs):
+        super(CircleSerializer, self).__init__(*args, **kwargs)
+
+        if self.instance:
+            for field in self.fields.values():
+                field.required = False
 
 
 class MediaSerializer(serializers.ModelSerializer):
@@ -52,17 +58,64 @@ class MediaSerializer(serializers.ModelSerializer):
         model = Media
         fields = '__all__'
 
+    def __init__(self, *args, **kwargs):
+        super(MediaSerializer, self).__init__(*args, **kwargs)
+
+        if self.instance:
+            for field in self.fields.values():
+                field.required = False
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        media_content = int(representation["media_content"])
+        media = MediaContentSerializer(instance=MediaContent.objects.get(pk=media_content))
+        representation["media_content"] = media.data
+        return representation
+
+
+class TextSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Text
+        fields = '__all__'
+    
+
+    def __init__(self, *args, **kwargs):
+        super(TextSerializer, self).__init__(*args, **kwargs)
+
+        if self.instance:
+            for field in self.fields.values():
+                field.required = False
+
+
+CONTENT_TYPE_TO_TYPE = {
+    "4": "v-rect",
+    "1": "v-circle",
+    "3": "v-image",
+    "5": "v-text"
+}
 
 
 class ShapeSerializer(serializers.ModelSerializer):
     object = serializers.SerializerMethodField()
 
-    props = ShapePropsSerializer()
-    shadow = ShadowPropsSerializer()
-
     class Meta:
         model = Shape
-        fields = ('id', 'content_type', 'object', 'props', 'shadow', 'template', 'shape_id')
+        fields = '__all__'
+        
+        extra_kwargs = {
+            'shape_id': {'write_only': True},
+            'layout': {'write_only': True},
+        }
+    
+
+    def __init__(self, *args, **kwargs):
+        super(ShapeSerializer, self).__init__(*args, **kwargs)
+
+        if self.instance:
+            for field in self.fields.values():
+                field.required = False
+        
 
     def get_object(self, obj):
         content_type = obj.content_type
@@ -76,66 +129,136 @@ class ShapeSerializer(serializers.ModelSerializer):
         elif content_type.model == 'media':
             serializer = MediaSerializer(Media.objects.get(pk=obj.shape_id))
 
+        elif content_type.model == 'text':
+            serializer = TextSerializer(Text.objects.get(pk=obj.shape_id))
         else:
             serializer = None
 
         return serializer.data if serializer else {}
+    
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation = flatten_dict(representation, "object")
+
+        content_type = str(representation.pop('content_type', None))
+        shape_type = CONTENT_TYPE_TO_TYPE[content_type]
+
+        
+        formated_representation = format_complex_fields(dict(representation), content_type)
+        camel_case_representation = dict_keys_snake_to_camel(formated_representation)
+
+        res = {
+            "type": shape_type,
+            "config": camel_case_representation
+        }
+        
+        return res
 
 
-    def create(self, validated_data):
+def snake_to_camel(string):
+    return re.sub(r'_([a-zA-Z])', lambda x: x.group(1).upper(), string) if string != "_id" else string
 
-        props_data = validated_data.pop('props', {})
-        props = ShapePropsSerializer(data=props_data)
 
-        shadow_data = validated_data.pop('shadow', {})
-        shadow = ShadowPropsSerializer(data=shadow_data)
+def dict_keys_snake_to_camel(d):    
+    return {snake_to_camel(k): v for k, v in d.items()}
 
-        if not props.is_valid():
-            return props.erros
 
-        if not shadow.is_valid():
-            return shadow.erros
+def format_complex_fields(representation, content_type):
+    representation["shadow_offset"] = {"x": representation["shadow_offset_x"], "y": representation["shadow_offset_y"]}
+    del representation["shadow_offset_x"]
+    del representation["shadow_offset_y"]
 
-        props_instance = props.save()
-        shadow_instance = shadow.save()
-        shape = Shape.objects.create(props=props_instance, shadow=shadow_instance, **validated_data)
-        return shape
+    return representation
 
+
+
+class LayoutSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Layout
+        fields = '__all__'
+    
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['shapes'] = ShapeSerializer(instance=Shape.objects.filter(layout=representation['id']), many=True).data
+        return representation
 
 class TemplateSerializer(serializers.ModelSerializer):
-    shapes = serializers.PrimaryKeyRelatedField(queryset=Shape.objects.all(), many=True)
+    layouts = LayoutSerializer(many=True, read_only=True)
 
     def __init__(self, *args, **kwargs):
         super(TemplateSerializer, self).__init__(*args, **kwargs)
 
+        if self.instance:
+            for field in self.fields.values():
+                field.required = False
+
 
     class Meta:
         model = Template
-        fields = ['id', 'user', 'name', 'shapes']
-
-    
-    def get_shapes(self, obj):
-
-        shape_id_list = [realtion.shape.id for realtion in TemplateShapeRelation.objects.filter(template__pk=obj.id)]
-        shape_data_list = Shape.objects.filter(pk__in=shape_id_list)
-        shape_serializer = ShapeSerializer(shape_data_list, many=True)
-
-        return shape_serializer.data
+        fields = ['id', 'user', 'name', 'layouts', 'width', 'height']
     
 
     def to_representation(self, instance):
-
-        data = super().to_representation(instance)
-        data["shapes"] = self.get_shapes(instance)
-        return data
+        representation = super().to_representation(instance)
+        return representation
 
 
-    def create(self, validated_data):
+    def update(self, instance, validated_data):
 
-        shapes_list = validated_data.pop('shapes')
-        template = Template.objects.create(**validated_data)
-
-        for shape in shapes_list:
-            TemplateShapeRelation.objects.create(template=template, shape=shape)
+        field_to_exclude = ['user', 'shapes']
+        for field in field_to_exclude:
+            if field in validated_data:
+                del validated_data[field]
         
-        return template
+        return super().update(instance, validated_data)
+
+
+class MediaContentSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = MediaContent
+        fields = '__all__'
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        return representation
+    
+
+
+
+CLASSNAME_TO_MODELS = {
+    "Rect": {
+        "content_type": 4,
+        "model": Rectangle,
+        "fields": ["width", "height"],
+        "serializer": RectangleSerializer
+    },
+    "Circle": {
+        "content_type": 1,
+        "model": Circle,
+        "fields": ["radius"],
+        "serializer": CircleSerializer
+    },
+    "Text": {
+        "content_type": 5,
+        "model": Text,
+        "fields": ["font_family", "font_size", "text"],
+        "serializer": TextSerializer
+    },
+    "Image": {
+        "content_type": 3,
+        "model": Media,
+        "fields": ["width", "height", "media_content"],
+        "serializer": MediaSerializer
+    }
+}
+
+CONTENT_TYPE_TO_CLASSNAME = {
+    "4": "Rect",
+    "1": "Circle",
+    "5": "Text",
+    "3": "Image"
+}

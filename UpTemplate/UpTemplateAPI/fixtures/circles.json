@@ -1,0 +1,11 @@
+[
+    {
+      "model": "UpTemplateAPI.circle",
+      "pk": 1,
+      "fields": {
+        "x": 30.0,
+        "y": 40.0,
+        "radius": 25.0
+      }
+    }
+  ]

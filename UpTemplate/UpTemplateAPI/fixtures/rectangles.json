@@ -1,0 +1,12 @@
+[
+    {
+        "model": "UpTemplateAPI.rectangle",
+        "pk": 1,
+            "fields": {
+            "x": "1",
+            "y": "30",
+            "width": "1000",
+            "height": "2000"
+        }
+    }
+]
