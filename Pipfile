@@ -8,6 +8,9 @@ djangorestframework = "*"
 django = "*"
 django-filter = "*"
 djangorestframework-simplejwt = "*"
+coverage = "*"
+drf-nested-routers = "*"
+django-cors-headers = "*"
 
 [dev-packages]
 
