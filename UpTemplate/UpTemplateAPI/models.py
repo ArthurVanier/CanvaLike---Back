@@ -12,9 +12,11 @@ class Template(models.Model):
     width = models.FloatField(default=800)
     height = models.FloatField(default=600)
 
+    
+
 class Layout(models.Model):
     template = models.ForeignKey(Template, on_delete=models.CASCADE)
-    
+    drawing_index_list = models.JSONField(default=list)
 
 
 class Shape(models.Model):

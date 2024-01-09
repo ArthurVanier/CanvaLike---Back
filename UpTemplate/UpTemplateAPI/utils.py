@@ -54,3 +54,11 @@ def flattern_to_nested(dictionary, fields, field_name):
             res[key] = value
 
     return res
+
+def clone_value_after_index(value, my_list):
+    if value in my_list:
+        index = my_list.index(value)
+        new_list = my_list[:index + 1] + [value] + my_list[index + 1:]
+        return new_list
+    else:
+        return my_list + [value]

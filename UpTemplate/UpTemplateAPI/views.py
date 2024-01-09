@@ -12,7 +12,7 @@ from .serializers import (
 )
 from django.contrib.contenttypes.models import ContentType
 from rest_framework.exceptions import MethodNotAllowed
-from .utils import camel_to_snake, flattern_to_nested
+from .utils import camel_to_snake, flattern_to_nested, clone_value_after_index
 from rest_framework.decorators import action
 import json
 import traceback
@@ -80,6 +80,7 @@ class TemplateView(viewsets.ModelViewSet):
         template_serializer = TemplateSerializer(instance=Template.objects.get(pk=pk)).data
         layouts = Layout.objects.filter(template=pk)
 
+        
         layouts_data = LayoutSerializer(instance=layouts, many=True).data
 
         res = {
@@ -231,7 +232,7 @@ class ShapeView(viewsets.ModelViewSet):
         shape_dict = camel_to_snake(shape_dict)
         print('--->', shape_dict)
         shape_serializer = ShapeSerializer(data=shape_dict) 
-
+        
         if shape_serializer.is_valid():
             shape_serializer.save()
             return Response(shape_serializer.data, status=status.HTTP_201_CREATED)
@@ -244,6 +245,7 @@ class ShapeView(viewsets.ModelViewSet):
         request_data["draggable"] = str(request_data["draggable"])
         
         snake_case_data = camel_to_snake(request_data)
+        print(request_data)
 
         shape_instance = Shape.objects.get(pk=kwargs['pk'])
         fields = [field.name for field in shape_instance.content_object._meta.fields if field.name != "id"]
@@ -269,5 +271,8 @@ class LayoutView(viewsets.ModelViewSet):
     queryset = Layout.objects.all()
     serializer_class = LayoutSerializer
     permission_classes = [IsAuthenticated]
+
+
+        
 
 
