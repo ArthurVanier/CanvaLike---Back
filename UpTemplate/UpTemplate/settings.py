@@ -69,7 +69,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://0.0.0.0:8080",  # Your frontend URL during development
     "http://localhost:8080",
 
-    f"http://{ip_address}:8080"
+    f"http://{ip_address}:8080",
+    f"http://192.168.1.39:8080"
     # Add other allowed origins if needed
 ]
 
