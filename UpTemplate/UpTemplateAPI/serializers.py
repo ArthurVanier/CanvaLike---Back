@@ -9,6 +9,7 @@ import re
 
 
 
+
 class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -88,12 +89,7 @@ class TextSerializer(serializers.ModelSerializer):
                 field.required = False
 
 
-CONTENT_TYPE_TO_TYPE = {
-    "4": "v-rect",
-    "1": "v-circle",
-    "3": "v-image",
-    "5": "v-text"
-}
+
 
 
 class ShapeSerializer(serializers.ModelSerializer):
@@ -225,31 +221,31 @@ class MediaContentSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         return representation
-    
 
-
+SHAPE_MODEL_LIST = ['circle', 'rectangle', 'text', 'media']
+CONTENT_TYPE = {content_type.model:content_type.id for content_type in ContentType.objects.filter(model__in=SHAPE_MODEL_LIST)}
 
 CLASSNAME_TO_MODELS = {
     "Rect": {
-        "content_type": 4,
+        "content_type": CONTENT_TYPE["rectangle"],
         "model": Rectangle,
         "fields": ["width", "height"],
         "serializer": RectangleSerializer
     },
     "Circle": {
-        "content_type": 1,
+        "content_type": CONTENT_TYPE["circle"],
         "model": Circle,
         "fields": ["radius"],
         "serializer": CircleSerializer
     },
     "Text": {
-        "content_type": 5,
+        "content_type": CONTENT_TYPE["text"],
         "model": Text,
         "fields": ["font_family", "font_size", "text"],
         "serializer": TextSerializer
     },
     "Image": {
-        "content_type": 3,
+        "content_type": CONTENT_TYPE["media"],
         "model": Media,
         "fields": ["width", "height", "media_content"],
         "serializer": MediaSerializer
@@ -257,8 +253,15 @@ CLASSNAME_TO_MODELS = {
 }
 
 CONTENT_TYPE_TO_CLASSNAME = {
-    "4": "Rect",
-    "1": "Circle",
-    "5": "Text",
-    "3": "Image"
+    str(CONTENT_TYPE["rectangle"]): "Rect",
+    str(CONTENT_TYPE["circle"]): "Circle",
+    str(CONTENT_TYPE["text"]): "Text",
+    str(CONTENT_TYPE["media"]): "Image"
+}
+
+CONTENT_TYPE_TO_TYPE = {
+    str(CONTENT_TYPE["rectangle"]): "v-rect",
+    str(CONTENT_TYPE["circle"]): "v-circle",
+    str(CONTENT_TYPE["media"]): "v-image",
+    str(CONTENT_TYPE["text"]): "v-text"
 }

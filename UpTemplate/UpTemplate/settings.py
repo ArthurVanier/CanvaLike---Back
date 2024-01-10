@@ -12,6 +12,11 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+import socket
+
+
+hostname = socket.gethostname()
+ip_address = socket.gethostbyname(hostname)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -61,10 +66,10 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    "http://192.168.1.48:8080",
     "http://0.0.0.0:8080",  # Your frontend URL during development
     "http://localhost:8080",
-    "http://192.168.1.24:8080"
+
+    f"http://{ip_address}:8080"
     # Add other allowed origins if needed
 ]
 
